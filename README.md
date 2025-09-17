@@ -1,115 +1,125 @@
-  # 📊 NTC Consumer Credit Risk Analysis
+# NTC Consumer Credit Risk Analysis
 
-This project analyzes **consumer credit risk** for the **New-to-Credit (NTC)** segment. It combines **Exploratory Data Analysis (EDA)**, **feature engineering**, and **machine learning** to predict the likelihood of customer charge-off, supporting business expansion strategies for lenders.  
-
----
-
-## 🎯 Project Goals
-- Understand credit risk patterns in **NTC customers**.  
-- Explore and clean real-world credit and loan data.  
-- Engineer new features such as **Debt-to-Income (DTI)** and utilization bands.  
-- Build predictive models (**Random Forest, XGBoost**) for charge-off classification.  
-- Balance **precision vs recall** to minimize false rejections while maximizing customer retention.  
+## 📌 Project Goals
+This project explores **consumer credit risk modeling** in the **New-To-Credit (NTC)** segment.  
+Our objectives are:  
+- Perform **Exploratory Data Analysis (EDA)** to uncover patterns in borrower profiles.  
+- Clean and engineer features (FICO bands, DTI ratios, utilization bands, etc.).  
+- Build **machine learning models** to predict the likelihood of charge-off (`Ever_ChargeOff`).  
+- Compare **Random Forest** and **XGBoost** performance with a focus on **precision** (minimizing false rejections of potential customers).  
 
 ---
 
-## 🛠 Technologies Used
-- **Python 3.8+**
-- **pandas, numpy** – data analysis and manipulation  
-- **matplotlib, seaborn** – visualizations  
-- **scikit-learn** – machine learning models & evaluation  
-- **xgboost** – gradient boosting algorithm  
-- **Google Colab** – execution environment  
+## 🛠️ Technologies Used
+- **Python 3.10+**  
+- **Pandas / NumPy** → Data wrangling and feature engineering  
+- **Matplotlib / Seaborn** → Visualization and EDA  
+- **Scikit-Learn** → Data splitting, Random Forest, evaluation metrics  
+- **XGBoost** → Gradient boosting model for imbalanced data  
+- **Google Colab** → Development environment  
 
 ---
 
-## 📂 Dataset Overview
-The dataset (`v_credit_data_NTC_v51825.csv`) contains anonymized consumer credit profiles, including:  
+## 📊 Dataset Overview
+The dataset contains consumer credit profiles, including:  
+- **Demographics**: Age, Bankruptcy history, Collections  
+- **Credit features**: FICO score, Revolving utilization, Student loan amounts, Unsecured debt  
+- **Assets & Income**: Checking account balance, Reported income  
+- **Target variables**:  
+  - `Ever_ChargeOff` (binary)  
+  - `ChargeOff_Balance` (continuous)  
 
-- **FICO_V** – Credit score  
-- **Income** – Annual income  
-- **Unsecured_Debt** – Total unsecured debt  
-- **Revolving_Util** – Credit utilization ratio  
-- **Ever_ChargeOff** – Target variable (binary: ever charged-off)  
-- **ChargeOff_Balance** – Exposure amount if default occurs  
-
-⚠️ *The dataset is confidential and excluded from this repository.*  
+**Key Stats after cleaning:**  
+- Rows: ~N (after removing outliers with IQR)  
+- Columns: 26+ engineered features  
+- Missing values handled (e.g., imputing `FICO_V` with sentinel value 999)  
 
 ---
 
-## 🔍 Exploratory Data Analysis (EDA)
-- Summary statistics and distributions  
-- Correlation heatmaps with **Ever_ChargeOff** and **ChargeOff_Balance**  
-- Histograms & KDE plots to visualize feature distributions  
-- Binary variable frequency analysis (e.g., bankruptcy, collections)  
+## 🔎 Exploratory Data Analysis (EDA)
+1. **Correlation Analysis**:  
+   - Strongest correlations were observed between `Ever_ChargeOff` and variables like **Revolving Utilization** and **Student Loan Amount**.  
+   - Heatmaps highlighted both binary and continuous relationships with the target.  
+
+2. **Outlier Detection**:  
+   - Applied **IQR method** across continuous variables.  
+   - Outliers removed to reduce skewness and improve model stability.  
+
+3. **Distribution Plots**:  
+   - FICO scores and income were right-skewed.  
+   - Utilization ratios showed extreme values >100%.  
 
 ---
 
 ## 🧹 Data Cleaning & Feature Engineering
-- **Outlier detection** with the IQR method  
-- **Missing values**: imputed missing FICO scores with a placeholder (999)  
-- **Feature Engineering**:
-  - Debt-to-Income (DTI) ratio  
-  - FICO bands (Poor → Exceptional)  
-  - Utilization bands (Very Low → Extreme)  
-  - DTI bands (Target → Very High)  
-  - Loan amount and asset bands  
-- Created additional categorical and banded features for interpretability  
+- **Missing values**:  
+  - `FICO_V` imputed with `999`.  
+- **Feature engineering**:  
+  - `DTI` (Debt-to-Income ratio).  
+  - **Banded variables**:  
+    - FICO bands (Poor → Exceptional).  
+    - Utilization bands (Very Low → Extreme).  
+    - DTI bands (<36% → >50%).  
+    - Loan amount bands (No debt → Very High).  
+    - Asset bands (<500 → >2500).  
+  - Added helper column `Accounts = 1` for count-based aggregation.  
 
 ---
 
 ## 🤖 Modeling Approach
-- **Data Split**:  
-  - 70% Training  
-  - 15% Validation  
-  - 15% Test  
+Two models were trained:  
 
-- **Random Forest Classifier**  
-  - Limited depth (`max_depth=6`)  
-  - Balanced class weights for imbalanced targets  
-  - Precision-focused thresholding (≥0.7 probability)  
+1. **Random Forest Classifier**  
+   - `n_estimators = 100`  
+   - `max_depth = 6`  
+   - `class_weight = balanced`  
 
-- **XGBoost Classifier**  
-  - Gradient-boosted trees with imbalance adjustment (`scale_pos_weight`)  
-  - Improved precision compared to Random Forest  
+2. **XGBoost Classifier**  
+   - `n_estimators = 100`  
+   - `max_depth = 6`  
+   - `scale_pos_weight` to correct for imbalance  
 
-- **Evaluation Metrics**  
-  - Confusion Matrix  
-  - Precision, Recall, F1-score  
-  - ROC-AUC with curve visualization  
+**Evaluation Strategy**:  
+- 70/15/15 split into **Train / Validation / Test**.  
+- Performance measured using **Precision, Recall, F1, and AUC**.  
+- Decision threshold set at **0.7** to favor **Precision over Recall**.  
 
 ---
 
-## 🌲 Feature Importance
-Both **Random Forest** and **XGBoost** highlighted:  
-- **FICO score**  
-- **Revolving utilization**  
-- **Debt-to-Income (DTI)** ratio  
-- **Income** and **Loan Amount**  
+## 📈 Feature Importance
+- **Random Forest**:  
+  - Top drivers: Revolving Utilization, Student Loan Amount, Income, Checking Assets.  
+- **XGBoost**:  
+  - Similar importance ranking, but gave higher weight to interaction terms like DTI and Loan Amount.  
 
-Feature importance plots were generated to visualize the top 15 predictors.  
-
----
-
-## 💡 Business Insight
-- **~14.9% charge-off rate** in NTC sample (consistent with expectations).  
-- **Random Forest** achieved ~53% precision on test data.  
-- **XGBoost** improved precision to ~58.8%, with slightly reduced recall.  
-- For lenders, prioritizing **precision** means fewer good customers are wrongly rejected, ensuring **higher retention and growth** in the NTC segment.  
+Both models confirm that **high utilization** and **low FICO** are primary predictors of charge-off.  
 
 ---
 
-## 🔮 Next Steps
-- Deploy model as an API for **real-time credit scoring**.  
-- Integrate **SHAP values** for model explainability.  
-- Explore **deep learning** for capturing feature interactions.  
-- Add **behavioral and transactional data** for stronger predictive power.  
+## 📊 Results Comparison
+
+| Metric (Test Set)         | Random Forest | XGBoost |
+|----------------------------|---------------|----------|
+| **Precision (Charge-off)** | ~53%          | ~59%     |
+| **Recall**                 | Lower         | Lower    |
+| **AUC**                    | ~0.53–0.55    | ~0.58–0.60 |
+| **Business Interpretation** | Balanced model, interpretable | More precise, but higher risk of overfitting |
+
+**Takeaway**:  
+- **Random Forest** provides a balanced baseline with interpretability.  
+- **XGBoost** yields **higher precision**, which is strategically aligned with retaining more NTC customers (reducing false negatives at the cost of recall).  
 
 ---
 
-## 📦 Installation
-Clone the repo and install dependencies:
-```bash
-git clone https://github.com/<your-repo>/NTC_Consumer_Credit.git
-cd NTC_Consumer_Credit
-pip install -r requirements.txt
+## 📂 Output
+Final cleaned dataset with engineered features exported to:  
+```
+/content/sample_data/NTC_Consumer_Credit_Data.csv
+```
+
+---
+
+✅ Next steps could include:  
+- Hyperparameter tuning (grid/random search).  
+- Ensemble stacking with logistic regression.  
+- Incorporating alternative data sources (e.g., telco, rent payments).  
